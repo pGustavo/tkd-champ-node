@@ -6,6 +6,11 @@ const db = new sqlite3.Database('./championshipDB.sqlite', (err) => {
         console.error('Error connecting to database:', err.message);
     } else {
         console.log('Connected to SQLite database.');
+        // Increase cache size and enable Write-Ahead Logging (WAL)
+        db.run('PRAGMA cache_size = 100000');
+        db.run('PRAGMA journal_mode = WAL');
+        db.run('PRAGMA synchronous = NORMAL');
+
     }
 });
 
@@ -16,6 +21,35 @@ db.serialize(() => {
         username TEXT UNIQUE NOT NULL,
         password TEXT NOT NULL,
         role TEXT NOT NULL
+    )`);
+});
+db.serialize(() => {
+    db.run(`CREATE TABLE IF NOT EXISTS athletes (
+                                                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                                    entryCode TEXT UNIQUE NOT NULL,
+                                                    firstName TEXT NOT NULL,
+                                                    lastName TEXT NOT NULL,
+                                                    birthdate TEXT NOT NULL,
+                                                    gender TEXT NOT NULL,
+                                                    nationality TEXT NOT NULL,
+                                                    email TEXT UNIQUE NOT NULL,
+                                                    photo TEXT,
+                                                    graduation TEXT NOT NULL,
+                                                    weightCategory TEXT NOT NULL,
+                                                    groupCategory TEXT NOT NULL,
+                                                    categoryType TEXT NOT NULL,
+                                                    clubId INTEGER NOT NULL,
+                                                    coachId INTEGER NOT NULL
+            )`);
+});
+
+db.serialize(() => {
+    db.run(`CREATE TABLE IF NOT EXISTS championships (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        location TEXT NOT NULL,
+        date TEXT NOT NULL,
+        logo TEXT
     )`);
 });
 
