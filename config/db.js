@@ -49,7 +49,22 @@ db.serialize(() => {
         name TEXT NOT NULL,
         location TEXT NOT NULL,
         date TEXT NOT NULL,
-        logo TEXT
+        logo TEXT,
+        tatamis TEXT,
+        tatamiNumber INTEGER
+    )`);
+});
+
+db.serialize(() => {
+    db.run(`CREATE TABLE IF NOT EXISTS poomseas (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        championshipId INTEGER NOT NULL,
+        draw TEXT NOT NULL,
+        attempts INTEGER,
+        DanEntries TEXT,
+        DanAttempts INTEGER dEFAULT 0,
+        KupEntries TEXT,
+        KupAttempts INTEGER DEFAULT 0
     )`);
 });
 

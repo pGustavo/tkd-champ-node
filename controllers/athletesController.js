@@ -38,10 +38,10 @@ exports.getAllAthletes = (req, res) => {
 };
 
 exports.updateAthlete = (req, res) => {
-    const { id } = req.params;
+    const { entryCode } = req.params;
     const updatedData = req.body;
 
-    Athlete.updateAthlete(id, updatedData, (err) => {
+    Athlete.updateAthlete(entryCode, updatedData, (err) => {
         if (err) {
             return res.status(500).json({ message: 'Erro ao atualizar atleta', error: err.message });
         }
@@ -50,9 +50,9 @@ exports.updateAthlete = (req, res) => {
 };
 
 exports.deleteAthlete = (req, res) => {
-    const { id } = req.params;
+    const { entryCode } = req.params;
 
-    Athlete.deleteAthlete(id, (err) => {
+    Athlete.deleteAthlete(entryCode, (err) => {
         if (err) {
             return res.status(500).json({ message: 'Erro ao deletar atleta', error: err.message });
         }
