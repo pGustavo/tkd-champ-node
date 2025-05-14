@@ -20,7 +20,8 @@ db.serialize(() => {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         username TEXT UNIQUE NOT NULL,
         password TEXT NOT NULL,
-        role TEXT NOT NULL
+        role TEXT NOT NULL,
+        status TEXT NOT NULL
     )`);
 });
 db.serialize(() => {
@@ -65,6 +66,27 @@ db.serialize(() => {
         DanAttempts INTEGER dEFAULT 0,
         KupEntries TEXT,
         KupAttempts INTEGER DEFAULT 0
+    )`);
+});
+
+db.serialize(() => {
+    db.run(`CREATE TABLE IF NOT EXISTS poomsaeEntry (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        ref1T INTEGER,
+        ref2T INTEGER,
+        ref3T INTEGER,
+        ref4T INTEGER,
+        ref5T INTEGER,
+        ref1A INTEGER,
+        ref2A INTEGER,
+        ref3A INTEGER,
+        ref4A INTEGER,
+        ref5A INTEGER,
+        poomsae TEXT,
+        total INTEGER,
+        entryCode TEXT,
+        referee TEXT,
+        championshipId INTEGER NOT NULL
     )`);
 });
 
