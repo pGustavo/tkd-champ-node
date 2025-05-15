@@ -1,10 +1,14 @@
 const express = require('express');
 const router = express.Router();
-const championshipsController = require('../controllers/championshipController');
+const championshipController = require('../controllers/championshipController');
+const authenticateToken = require("../middlewares/authenticationToken");
 
-router.post('/championship', championshipsController.createChampionship);
-router.get('/championship/:id', championshipsController.getChampionshipById);
-router.put('/championship/:id', championshipsController.updateChampionship);
-router.get('/championships', championshipsController.getAllChampionships);
+router.post('/championships', authenticateToken, championshipController.createChampionship);
+router.get('/championships', authenticateToken, championshipController.getAllChampionships);
+router.get('/championships/active', authenticateToken, championshipController.getActiveChampionships);
+router.get('/championships/:id', authenticateToken, championshipController.getChampionshipById);
+router.put('/championships/:id', authenticateToken, championshipController.updateChampionship);
+router.delete('/championships/:id', authenticateToken, championshipController.deleteChampionship);
+router.patch('/championships/:id/status', authenticateToken, championshipController.updateChampionshipStatus);
 
 module.exports = router;

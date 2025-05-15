@@ -52,7 +52,8 @@ db.serialize(() => {
         date TEXT NOT NULL,
         logo TEXT,
         tatamis TEXT,
-        tatamiNumber INTEGER
+        tatamiNumber INTEGER,
+        active INTEGER
     )`);
 });
 
