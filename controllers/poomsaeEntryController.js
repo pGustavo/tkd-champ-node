@@ -3,7 +3,7 @@ const PoomsaeEntry = require('../models/PoomsaeEntry');
 
 exports.createEntries = (req, res) => {
     const data = req.body;
-    const { championshipId } = req.params; // Obter championshipId da URL
+    const { championshipId } = req.params;
 
     if (!championshipId) {
         return res.status(400).json({
@@ -25,7 +25,15 @@ exports.createEntries = (req, res) => {
     }
 };
 
-// Processa múltiplas entradas
+function checkDuplicateEntry(entryData, callback) {
+    PoomsaeEntry.findByEntryCodeAndPoomsae(
+        entryData.entryCode,
+        entryData.poomsae,
+        entryData.championshipId,
+        callback
+    );
+}
+
 function processMultipleEntries(entries, res) {
     if (entries.length === 0) {
         return res.status(400).json({
@@ -33,37 +41,105 @@ function processMultipleEntries(entries, res) {
         });
     }
 
-    const results = [];
-    let completed = 0;
-    let hasError = false;
+    // Primeiro, verificar todas as entradas possíveis duplicatas
+    const duplicateChecks = [];
 
-    entries.forEach(entryData => {
-        preprocessEntry(entryData);
+    // Criar uma promessa para cada verificação de duplicata
+    entries.forEach(entry => {
+        duplicateChecks.push(new Promise((resolve) => {
+            checkDuplicateEntry(entry, (err, existingEntry) => {
+                if (err || existingEntry) {
+                    // Se houve erro ou é duplicata
+                    resolve({
+                        entry: entry,
+                        isDuplicate: !!existingEntry,
+                        error: err
+                    });
+                } else {
+                    resolve({
+                        entry: entry,
+                        isDuplicate: false
+                    });
+                }
+            });
+        }));
+    });
 
-        PoomsaeEntry.createEntry(entryData, (err, result) => {
-            completed++;
+    // Processar todas as verificações de duplicatas
+    Promise.all(duplicateChecks).then(results => {
+        const entriesToCreate = [];
+        const duplicates = [];
+        const errors = [];
 
-            if (err) {
-                hasError = true;
-                results.push({ error: err.message || 'Erro ao criar entrada', data: entryData });
-            } else {
-                results.push({ success: true, data: result });
-            }
-
-            // Quando todas as operações estiverem concluídas
-            if (completed === entries.length) {
-                const status = hasError ? 207 : 201; // Multi-Status ou Created
-                res.status(status).json({
-                    message: hasError ? 'Algumas entradas foram criadas com sucesso' :
-                        'Todas as entradas foram criadas com sucesso',
-                    results: results
+        // Separar entradas que podem ser criadas das duplicadas
+        results.forEach(result => {
+            if (result.isDuplicate) {
+                duplicates.push(result.entry);
+            } else if (result.error) {
+                errors.push({
+                    entry: result.entry,
+                    error: result.error
                 });
+            } else {
+                preprocessEntry(result.entry);
+                entriesToCreate.push(result.entry);
             }
+        });
+
+        // Se não há entradas para criar, retornar erro
+        if (entriesToCreate.length === 0) {
+            return res.status(400).json({
+                error: 'Todas as entradas são duplicadas ou contêm erros',
+                duplicates: duplicates,
+                errors: errors
+            });
+        }
+
+        // Criar entradas válidas
+        const creationPromises = entriesToCreate.map(entry => {
+            return new Promise((resolve) => {
+                PoomsaeEntry.createEntry(entry, (err, result) => {
+                    if (err) {
+                        resolve({
+                            success: false,
+                            entry: entry,
+                            error: err.message
+                        });
+                    } else {
+                        resolve({
+                            success: true,
+                            entry: result
+                        });
+                    }
+                });
+            });
+        });
+
+        // Processar resultados da criação
+        Promise.all(creationPromises).then(creationResults => {
+            const successful = creationResults.filter(r => r.success);
+            const failed = creationResults.filter(r => !r.success);
+
+            const hasErrors = failed.length > 0 || duplicates.length > 0 || errors.length > 0;
+            const statusCode = hasErrors ? 207 : 201; // Multi-Status ou Created
+
+            res.status(statusCode).json({
+                message: hasErrors
+                    ? 'Algumas entradas foram processadas com erros ou são duplicadas'
+                    : 'Todas as entradas foram criadas com sucesso',
+                created: successful.length,
+                duplicates: duplicates.length,
+                errors: failed.length + errors.length,
+                results: {
+                    successful: successful.map(r => r.entry),
+                    duplicates: duplicates,
+                    failed: [...failed.map(r => ({ entry: r.entry, error: r.error })), ...errors]
+                }
+            });
         });
     });
 }
 
-// Processa uma única entrada
 function processSingleEntry(entryData, res) {
     // Validação básica
     if (!entryData.entryCode || !entryData.poomsae) {
@@ -74,22 +150,37 @@ function processSingleEntry(entryData, res) {
 
     preprocessEntry(entryData);
 
-    PoomsaeEntry.createEntry(entryData, (err, result) => {
+    // Verificar duplicação antes de criar
+    checkDuplicateEntry(entryData, (err, existingEntry) => {
         if (err) {
-            console.error('Erro ao criar entrada de poomsae:', err);
+            console.error('Erro ao verificar entrada duplicada:', err);
             return res.status(500).json({
-                error: 'Falha ao criar entrada de poomsae'
+                error: 'Falha ao verificar entrada duplicada'
             });
         }
 
-        res.status(201).json({
-            message: 'Entrada de poomsae criada com sucesso',
-            data: result
+        if (existingEntry) {
+            return res.status(409).json({
+                error: 'Entrada duplicada: já existe uma entrada com o mesmo código e poomsae'
+            });
+        }
+
+        PoomsaeEntry.createEntry(entryData, (err, result) => {
+            if (err) {
+                console.error('Erro ao criar entrada de poomsae:', err);
+                return res.status(500).json({
+                    error: 'Falha ao criar entrada de poomsae'
+                });
+            }
+
+            res.status(201).json({
+                message: 'Entrada de poomsae criada com sucesso',
+                data: result
+            });
         });
     });
 }
 
-// Função auxiliar para pré-processar entradas
 function preprocessEntry(entryData) {
     // Calcular o total se não for fornecido
     if (!entryData.total) {

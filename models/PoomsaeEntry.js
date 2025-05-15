@@ -67,3 +67,19 @@ exports.getEntriesByEntryCode = (entryCode, callback) => {
 exports.getEntriesByReferee = (referee, callback) => {
     db.all('SELECT * FROM poomsaeEntry WHERE referee = ?', [referee], callback);
 };
+
+// Adicione ao arquivo models/PoomsaeEntry.js
+exports.findByEntryCodeAndPoomsae = (entryCode, poomsae, championshipId, callback) => {
+    const sql = `
+    SELECT * FROM poomsaeEntry
+    WHERE entryCode = ? AND poomsae = ? AND championshipId = ?
+    LIMIT 1
+  `;
+
+    db.get(sql, [entryCode, poomsae, championshipId], (err, row) => {
+        if (err) {
+            return callback(err);
+        }
+        callback(null, row);
+    });
+};
