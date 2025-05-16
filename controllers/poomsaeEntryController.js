@@ -287,10 +287,10 @@ exports.getEntriesByEntryCode = (req, res) => {
     });
 };
 
-exports.getEntriesByReferee = (req, res) => {
-    const referee = req.params.referee;
+exports.getEntriesByLocked = (req, res) => {
+    const locked = req.params.locked;
 
-    PoomsaeEntry.getEntriesByReferee(referee, (err, entries) => {
+    PoomsaeEntry.getEntriesByLocked(locked, (err, entries) => {
         if (err) {
             console.error('Erro ao buscar entradas de poomsae por árbitro:', err);
             return res.status(500).json({
@@ -301,3 +301,154 @@ exports.getEntriesByReferee = (req, res) => {
         res.json(entries);
     });
 };
+
+exports.updateEntries = (req, res) => {
+    const data = req.body;
+    const { championshipId } = req.params;
+
+    if (!championshipId) {
+        return res.status(400).json({
+            error: 'ID do campeonato é obrigatório'
+        });
+    }
+
+    // Verifica se é um array ou objeto único
+    if (Array.isArray(data)) {
+        data.forEach(entry => {
+            entry.championshipId = championshipId;
+
+            // Verifica se todos os valores de árbitros estão presentes
+            if (
+                entry.ref1A && entry.ref2A && entry.ref3A && entry.ref4A && entry.ref5A &&
+                entry.ref1T && entry.ref2T && entry.ref3T && entry.ref4T && entry.ref5T
+            ) {
+                entry.locked = 1;
+            }
+
+            preprocessEntry(entry);
+        });
+        updateMultipleEntries(data, res);
+    } else {
+        data.championshipId = championshipId;
+
+        // Verifica se todos os valores de árbitros estão presentes
+        if (
+            data.ref1A && data.ref2A && data.ref3A && data.ref4A && data.ref5A &&
+            data.ref1T && data.ref2T && data.ref3T && data.ref4T && data.ref5T
+        ) {
+            data.locked = 1;
+        }
+
+        preprocessEntry(data);
+        updateSingleEntry(data, res);
+    }
+};
+
+function updateMultipleEntries(entries, res) {
+    if (entries.length === 0) {
+        return res.status(400).json({
+            error: 'Nenhum dado fornecido para atualizar entradas'
+        });
+    }
+
+    const updatePromises = entries.map(entry => {
+        return new Promise((resolve) => {
+            // Verificar se a entrada existe pelo ID
+            if (!entry.id) {
+                resolve({
+                    success: false,
+                    entry: entry,
+                    error: 'ID da entrada é obrigatório para atualização'
+                });
+                return;
+            }
+
+            PoomsaeEntry.getEntryById(entry.id, (err, existingEntry) => {
+                if (err || !existingEntry) {
+                    resolve({
+                        success: false,
+                        entry: entry,
+                        error: err ? err.message : 'Entrada não encontrada'
+                    });
+                    return;
+                }
+
+                // Atualiza a entrada
+                PoomsaeEntry.updateEntry(entry, (err, result) => {
+                    if (err) {
+                        resolve({
+                            success: false,
+                            entry: entry,
+                            error: err.message
+                        });
+                    } else {
+                        resolve({
+                            success: true,
+                            entry: result || entry
+                        });
+                    }
+                });
+            });
+        });
+    });
+
+    Promise.all(updatePromises).then(results => {
+        const successful = results.filter(r => r.success);
+        const failed = results.filter(r => !r.success);
+
+        const hasErrors = failed.length > 0;
+        const statusCode = hasErrors ? 207 : 200; // Multi-Status ou OK
+
+        res.status(statusCode).json({
+            message: hasErrors
+                ? 'Algumas entradas foram atualizadas com erros'
+                : 'Todas as entradas foram atualizadas com sucesso',
+            updated: successful.length,
+            errors: failed.length,
+            results: {
+                successful: successful.map(r => r.entry),
+                failed: failed.map(r => ({ entry: r.entry, error: r.error }))
+            }
+        });
+    });
+}
+
+function updateSingleEntry(entryData, res) {
+    // Validação básica
+    if (!entryData.id) {
+        return res.status(400).json({
+            error: 'ID da entrada é obrigatório para atualização'
+        });
+    }
+
+    // Verificar se a entrada existe
+    PoomsaeEntry.getEntryById(entryData.id, (err, existingEntry) => {
+        if (err) {
+            console.error('Erro ao verificar entrada existente:', err);
+            return res.status(500).json({
+                error: 'Falha ao verificar entrada existente'
+            });
+        }
+
+        if (!existingEntry) {
+            return res.status(404).json({
+                error: 'Entrada não encontrada'
+            });
+        }
+
+        // Atualiza a entrada
+        PoomsaeEntry.updateEntry(entryData, (err, result) => {
+            if (err) {
+                console.error('Erro ao atualizar entrada de poomsae:', err);
+                return res.status(500).json({
+                    error: 'Falha ao atualizar entrada de poomsae'
+                });
+            }
+
+            res.status(200).json({
+                message: 'Entrada de poomsae atualizada com sucesso',
+                data: result || entryData
+            });
+        });
+    });
+}

@@ -86,8 +86,33 @@ db.serialize(() => {
         poomsae TEXT,
         total INTEGER,
         entryCode TEXT,
-        referee TEXT,
-        championshipId INTEGER NOT NULL
+        championshipId INTEGER NOT NULL,
+        locked INTEGER DEFAULT 0
+    )`);
+});
+
+db.serialize(() => {
+    db.run(`CREATE TABLE IF NOT EXISTS tatami (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        championshipId INTEGER NOT NULL,
+        ref1 TEXT,
+        ref2 TEXT,
+        ref3 TEXT,
+        ref4 TEXT,
+        ref5 TEXT,
+        area INTEGER
+    )`);
+});
+
+db.serialize(() => {
+    db.run(`CREATE TABLE IF NOT EXISTS user_tokens (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        userId INTEGER NOT NULL,
+        token TEXT NOT NULL,
+        createdAt TEXT NOT NULL,
+        expiresAt TEXT NOT NULL,
+        isRevoked INTEGER DEFAULT 0,
+        FOREIGN KEY (userId) REFERENCES users (id)
     )`);
 });
 

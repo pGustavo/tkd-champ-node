@@ -4,20 +4,20 @@ exports.createEntry = (entryData, callback) => {
     const {
         ref1T, ref2T, ref3T, ref4T, ref5T,
         ref1A, ref2A, ref3A, ref4A, ref5A,
-        poomsae, total, entryCode, referee, championshipId
+        poomsae, total, entryCode, locked, championshipId
     } = entryData;
 
     const sql =
         `INSERT INTO poomsaeEntry (
             ref1T, ref2T, ref3T, ref4T, ref5T,
             ref1A, ref2A, ref3A, ref4A, ref5A,
-            poomsae, total, entryCode, referee, championshipId
+            poomsae, total, entryCode, locked, championshipId
         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
     db.run(sql, [
         ref1T, ref2T, ref3T, ref4T, ref5T,
         ref1A, ref2A, ref3A, ref4A, ref5A,
-        poomsae, total, entryCode, referee, championshipId
+        poomsae, total, entryCode, locked, championshipId
     ], function(err) {
         if (err) {
             return callback(err);
@@ -64,8 +64,8 @@ exports.getEntriesByEntryCode = (entryCode, callback) => {
     db.all('SELECT * FROM poomsaeEntry WHERE entryCode = ?', [entryCode], callback);
 };
 
-exports.getEntriesByReferee = (referee, callback) => {
-    db.all('SELECT * FROM poomsaeEntry WHERE referee = ?', [referee], callback);
+exports.getEntriesByLocked = (locked, callback) => {
+    db.all('SELECT * FROM poomsaeEntry WHERE locked = ?', [locked], callback);
 };
 
 // Adicione ao arquivo models/PoomsaeEntry.js
@@ -81,5 +81,33 @@ exports.findByEntryCodeAndPoomsae = (entryCode, poomsae, championshipId, callbac
             return callback(err);
         }
         callback(null, row);
+    });
+};
+
+exports.updateEntry = (entryData, callback) => {
+    const {
+        id, ref1T, ref2T, ref3T, ref4T, ref5T,
+        ref1A, ref2A, ref3A, ref4A, ref5A,
+        poomsae, total, entryCode, locked, championshipId
+    } = entryData;
+
+    const sql = `
+        UPDATE poomsaeEntry
+        SET ref1T = ?, ref2T = ?, ref3T = ?, ref4T = ?, ref5T = ?,
+            ref1A = ?, ref2A = ?, ref3A = ?, ref4A = ?, ref5A = ?,
+            poomsae = ?, total = ?, entryCode = ?, locked = ?, championshipId = ?
+        WHERE id = ?
+    `;
+
+    db.run(sql, [
+        ref1T, ref2T, ref3T, ref4T, ref5T,
+        ref1A, ref2A, ref3A, ref4A, ref5A,
+        poomsae, total, entryCode, locked, championshipId,
+        id
+    ], function(err) {
+        if (err) {
+            return callback(err);
+        }
+        callback(null, entryData);
     });
 };

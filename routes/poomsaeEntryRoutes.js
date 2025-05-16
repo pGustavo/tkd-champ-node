@@ -17,9 +17,12 @@ router.get('/entries/poomsae-entries/championship/:championshipId', authenticate
 router.get('/entries/poomsae-entries/entry-code/:entryCode', authenticateToken, poomsaeEntryController.getEntriesByEntryCode);
 
 // Obter entradas por árbitro
-router.get('/entries/poomsae-entries/referee/:referee', authenticateToken, poomsaeEntryController.getEntriesByReferee);
+router.get('/entries/poomsae-entries/locked/:locked', authenticateToken, poomsaeEntryController.getEntriesByLocked);
 
 // Obter uma entrada específica pelo ID - esta rota deve vir por último
 router.get('/entries/poomsae-entries/:id', authenticateToken, poomsaeEntryController.getEntryById);
+
+// Atualizar entradas (com championshipId como parâmetro de URL)
+router.put('/entries/poomsae-entries/championship/:championshipId', authenticateToken, poomsaeEntryController.updateEntries);
 
 module.exports = router;
