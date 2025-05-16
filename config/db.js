@@ -33,7 +33,7 @@ db.serialize(() => {
                                                     birthdate TEXT NOT NULL,
                                                     gender TEXT NOT NULL,
                                                     nationality TEXT NOT NULL,
-                                                    email TEXT UNIQUE NOT NULL,
+                                                    email TEXT,
                                                     photo TEXT,
                                                     graduation TEXT NOT NULL,
                                                     weightCategory TEXT NOT NULL,
