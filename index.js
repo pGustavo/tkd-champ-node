@@ -1,6 +1,8 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const cors = require('cors');
+const swaggerUi = require('swagger-ui-express');
+const swaggerJsdoc = require('swagger-jsdoc');
 const authRoutes = require('./routes/authRoutes');
 const userRoutes = require('./routes/usersRoutes');
 const athleteRoutes = require('./routes/athletesRoutes');
@@ -9,22 +11,36 @@ const poomsaeRoutes = require('./routes/poomsaeRoutes');
 const poomsaeEntryRoutes = require('./routes/poomsaeEntryRoutes');
 const tatamiRoutes = require('./routes/tatamiRoutes');
 
-
-const db = require('./config/db'); // Ensure this file is properly set up
-
-dotenv.config(); // Load environment variables
+dotenv.config();
 
 const app = express();
 
-
-// Aumentar o limite do tamanho do corpo da requisição
-app.use(express.json({ limit: '1000mb' })); // Ajuste o limite conforme necessário
+app.use(express.json({ limit: '1000mb' }));
 app.use(express.urlencoded({ limit: '1000mb', extended: true }));
+app.use(cors());
 
-app.use(express.json()); // Enables JSON request body parsing
-app.use(cors()); // Enables cross-origin requests
+// Configuração do Swagger
+const swaggerOptions = {
+    definition: {
+        openapi: '3.0.0',
+        info: {
+            title: 'Taekwondo Management API',
+            version: '1.0.0',
+            description: 'API Documentation for Taekwondo Management System',
+        },
+        servers: [
+            {
+                url: 'http://localhost:3000',
+            },
+        ],
+    },
+    apis: ['./routes/*.js'],
+};
 
-// Routes
+const swaggerDocs = swaggerJsdoc(swaggerOptions);
+app.use('/', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+
+// Rotas
 app.use('/api/auth', authRoutes);
 app.use('/api', userRoutes);
 app.use('/api', athleteRoutes);
@@ -35,7 +51,3 @@ app.use('/api', tatamiRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
-
-
-/*RUN*/
-//node index.js
