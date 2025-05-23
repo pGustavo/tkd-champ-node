@@ -64,7 +64,7 @@ db.serialize(() => {
         draw TEXT NOT NULL,
         attempts INTEGER,
         DanEntries TEXT,
-        DanAttempts INTEGER dEFAULT 0,
+        DanAttempts INTEGER DEFAULT 0,
         KupEntries TEXT,
         KupAttempts INTEGER DEFAULT 0
     )`);
