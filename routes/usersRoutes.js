@@ -76,7 +76,7 @@ router.get('/users', authenticateToken, getAllUsers);
  *       500:
  *         description: Internal server error
  */
-router.post('/register', authenticateToken, createUser);
+router.post('/register', createUser);
 
 /**
  * @swagger

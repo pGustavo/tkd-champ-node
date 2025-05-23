@@ -116,4 +116,16 @@ db.serialize(() => {
     )`);
 });
 
+db.serialize(() => {
+    db.run(`CREATE TABLE IF NOT EXISTS teams (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,   
+        coachId TEXT NOT NULL,
+        name TEXT NOT NULL,
+        address TEXT,
+        district TEXT,
+        country TEXT,
+        email TEXT NOT NULL
+    )`);
+});
+
 module.exports = db;

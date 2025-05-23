@@ -144,10 +144,17 @@ exports.deleteChampionship = (req, res) => {
         return res.status(400).json({ message: 'O ID é obrigatório' });
     }
 
-    Championship.deleteChampionship(id, (err) => {
+    // Inicia uma transação para garantir exclusão atômica
+    Championship.deleteAllRelatedData(id, (err) => {
         if (err) {
-            return res.status(500).json({ message: 'Erro ao deletar campeonato', error: err.message });
+            return res.status(500).json({ message: 'Erro ao deletar dados relacionados', error: err.message });
         }
-        res.status(200).json({ message: 'Campeonato deletado com sucesso' });
+
+        Championship.deleteChampionship(id, (err) => {
+            if (err) {
+                return res.status(500).json({ message: 'Erro ao deletar campeonato', error: err.message });
+            }
+            res.status(200).json({ message: 'Campeonato e dados relacionados deletados com sucesso' });
+        });
     });
 };

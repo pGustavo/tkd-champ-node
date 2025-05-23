@@ -54,10 +54,26 @@ exports.getActiveChampionships = (callback) => {
     );
 };
 
-exports.deleteChampionship = (id, callback) => {
-    db.run(
-        `DELETE FROM championships WHERE id = ?`,
-        [id],
-        callback
-    );
+exports.deleteAllRelatedData = (championshipId, callback) => {
+    const queries = [
+        `DELETE FROM poomsaeEntry WHERE championshipId = ?`,
+        `DELETE FROM poomseas WHERE championshipId = ?`,
+        `DELETE FROM tatami WHERE championshipId = ?`,
+        `DELETE FROM championships WHERE id = ?`
+    ];
+
+    db.serialize(() => {
+        db.run('BEGIN TRANSACTION');
+        try {
+            queries.forEach(query => {
+                db.run(query, [championshipId], (err) => {
+                    if (err) throw err;
+                });
+            });
+            db.run('COMMIT', callback);
+        } catch (err) {
+            db.run('ROLLBACK');
+            callback(err);
+        }
+    });
 };

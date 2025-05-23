@@ -59,3 +59,12 @@ exports.deleteAthlete = (req, res) => {
         res.json({ message: 'Atleta deletado com sucesso' });
     });
 };
+
+exports.deleteAllAthletes = (req, res) => {
+    Athlete.deleteAllAthletes((err) => {
+        if (err) {
+            return res.status(500).json({ message: 'Erro ao deletar todos os atletas', error: err.message });
+        }
+        res.json({ message: 'Todos os atletas foram deletados com sucesso' });
+    });
+};

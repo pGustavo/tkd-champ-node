@@ -79,5 +79,23 @@ router.post('/athletes', authenticateToken, athleteController.saveAthletes);
  *         description: Internal server error
  */
 router.get('/athletes', authenticateToken, athleteController.getAllAthletes);
+/**
+ * @swagger
+ * /api/athletes:
+ *   delete:
+ *     summary: Deleta todos os atletas
+ *     tags:
+ *       - Athletes
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Todos os atletas foram deletados com sucesso
+ *       401:
+ *         description: Acesso não autorizado
+ *       500:
+ *         description: Erro interno do servidor
+ */
+router.delete('/athletes', authenticateToken, athleteController.deleteAllAthletes);
 
 module.exports = router;

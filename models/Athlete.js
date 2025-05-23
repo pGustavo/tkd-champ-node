@@ -75,3 +75,7 @@ exports.updateAthlete = (entryCode, updatedData, callback) => {
 exports.deleteAthlete = (entryCode, callback) => {
     db.run('DELETE FROM athletes WHERE entryCode = ?', [entryCode], callback);
 };
+
+exports.deleteAllAthletes = (callback) => {
+    db.run(`DELETE FROM athletes`, callback);
+};
